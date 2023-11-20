@@ -71,34 +71,37 @@ void TeaRobot::PosCallback(const nav_msgs::Odometry::ConstPtr& msg)
             tf::Matrix3x3 m(q);
             m.getRPY(roll, pitch, yaw);
             MoveObjs[0]->ranges=conversion;
-
-            MoveObjs[0]->X=X;
-            MoveObjs[0]->Y=Y;
-            MoveObjs[0]->roll=roll;
-            MoveObjs[0]->pitch=pitch;
-            MoveObjs[0]->yaw=yaw;
-            MoveObjs[0]->w=w;
-            std::cout<<"best child "<< child[0]<<" "<<child[1]<<std::endl;
-            if(count1<1)
+            if(count1>1)
             {
-                std::cout<<"best child "<< child[0]<<" "<<child[1]<<std::endl;
-                MoveObjs[0]->WayPoint =child;
-                MoveObjs[0]->EndPoint = Target;
-                count1++;
-            }
-            else
-            {
+                MoveObjs[0]->X=X;
+                MoveObjs[0]->Y=Y;
+                MoveObjs[0]->roll=roll;
+                MoveObjs[0]->pitch=pitch;
+                MoveObjs[0]->yaw=yaw;
+                MoveObjs[0]->w=w;
+                //std::cout<<child[0]<<" "<<child[1]<<std::endl;
                 if(MoveObjs[0]->headingSet ==false)
                 {
                     MoveObjs[0]->HeadingCalc();
                     head = MoveObjs[0]->angle;
                 }
-                else if (MoveObjs[0]->headingSet ==true)
+                if(MoveObjs[0]->headingSet ==true)
                 {
                     MoveObjs[0]->Obs_avoid();
                     MoveObjs[0]->Move();
                 }
             }
+            else
+            {
+
+                MoveObjs[0]->WayPoint =child;
+                MoveObjs[0]->EndPoint = Target;
+                std::cout<<"child"<<child[0]<<" "<<child[1]<<std::endl;
+                count1++;
+            }
+            
+            
+            
             
             
             

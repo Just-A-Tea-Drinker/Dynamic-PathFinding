@@ -26,8 +26,8 @@ void Movement::Obs_avoid()
 {
     std::cout<<"Child "<<WayPoint[0]<<" "<<WayPoint[1]<<std::endl;
     std::cout<<"Current position "<<X<<" "<<Y<<std::endl;
-    //std::cout<<<<std::endl;
-    if(WayPoint[0]==int(X) && WayPoint[1]==100)
+    std::cout<<sqrt((WayPoint[0]-X)*(WayPoint[0]-X) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))<<std::endl;
+    if(sqrt((WayPoint[0]-X)*(WayPoint[0]-X) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))<=0.05)
     {
         ROS_INFO("Node Reached");
         Lin_Vel = 0.0f;

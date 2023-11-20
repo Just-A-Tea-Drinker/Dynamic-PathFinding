@@ -34,8 +34,8 @@ class TeaRobot
     std::vector<NAV_manager*>NavObjs;
     std::vector<Movement*>MoveObjs;
     //members
-    float count= 0;
-    float count1 =0;
+    int count= 0;
+    int count1 =0;
     //Nodes
     std::vector<std::vector<float>>Nodes;
     //Scan Data
