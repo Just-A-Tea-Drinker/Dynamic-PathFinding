@@ -1,14 +1,4 @@
-#include <fstream>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <sstream>
-#include <unistd.h>
-#include <filesystem>
-#include <limits.h>
-#include <stdio.h>
-
-
+#include "Headers.h"
 
 
 class NAV_manager
@@ -26,6 +16,8 @@ class NAV_manager
     ~NAV_manager();
 
     void Target_Handler();
+    void Node_Handler();
     void Node_Ret();
-    void Node_Add(float x,float y,std::vector<std::vector<float>>Parent,std::vector<std::vector<float>>Children);
+    void Node_ReadFormat();
+    void Node_Add(std::vector<std::vector<float>>Node);
 };

@@ -138,8 +138,8 @@ add_executable(tea
 	scripts/NAV_manager.h
 	scripts/NAV_manager.cpp
 	
-	scripts/Sen_manager.h
-	scripts/Sen_manager.cpp
+	scripts/Move.h
+	scripts/Move.cpp
 	
 	scripts/Re_learn.h
 	scripts/Re_learn.cpp
@@ -149,6 +149,9 @@ add_executable(tea
 	
 	scripts/Robo_control.h
 	scripts/Robo_control.cpp
+	
+	scripts/Headers.h
+	
 
 	
 )
