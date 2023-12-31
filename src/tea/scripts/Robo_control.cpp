@@ -30,7 +30,9 @@ TeaRobot::TeaRobot()
     ros::waitForShutdown();
 };
 TeaRobot::~TeaRobot()
-{};
+{
+    ROS_INFO("Robot was shut down sucessfully");
+};
 
 void TeaRobot::ScanCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
@@ -81,75 +83,142 @@ void TeaRobot::PosCallback(const nav_msgs::Odometry::ConstPtr& msg)
             //testing if an object has been detected
             
             
-                //obj has been dectected so a new direction need to decided
-                //MoveObjs[0]->ObjDect =false;
-                //Setting up the movement controller to calculate headings and move
-                MoveObjs[0]->ranges=ranges;
-                //storing  the children to make sure a code lockup doesnt occur
+            //obj has been dectected so a new direction need to decided
+               
+            //Setting up the movement controller to calculate headings and move
+            MoveObjs[0]->ranges=ranges;
+            //storing  the children to make sure a code lockup doesnt occur
                 
-                //only start the movement if both the best child and the children have been found
-                if(child.size()>0&&LearnObjs[0]->Re_Learn_Frame.size()>1)
+            //only start the movement if both the best child and the children have been found
+            if(child.size()>0&&LearnObjs[0]->Re_Learn_Frame.size()>1)
+            {
+                    
+                    
+
+
+                //count1 is used to again control the order of execution due to dependancies
+                if(count1>0)
                 {
-                    
-                    
-                    //count1 is used to again control the order of execution due to dependancies
-                    if(count1>0)
+                    //traveral and main target has been set now to start moving
+                    MoveObjs[0]->X=X;
+                    MoveObjs[0]->Y=Y;
+                    MoveObjs[0]->roll=roll;
+                    MoveObjs[0]->pitch=pitch;
+                    MoveObjs[0]->yaw=yaw;
+                    MoveObjs[0]->w=w;
+                   
+                    //if the heading is false then the heading is calculated
+                    //adding the node into a collection nodes seemingly unlinked whereby they are stitched together to form a cartesian ish map
+                    if(LearnObjs[0]->toregress == true)
                     {
-                        //traveral and main target has been set now to start moving
-                        MoveObjs[0]->X=X;
-                        MoveObjs[0]->Y=Y;
-                        MoveObjs[0]->roll=roll;
-                        MoveObjs[0]->pitch=pitch;
-                        MoveObjs[0]->yaw=yaw;
-                        MoveObjs[0]->w=w;
-                        
-                        if(MoveObjs[0]->headingSet ==false)
+                        if(sqrt((START[0]-X)*(START[0]-X) +((START[1]-Y)*(START[1]-Y)))<=0.1)
                         {
-                            //MoveObjs[0]->WayPoint =child;
-                            MoveObjs[0]->HeadingCalc();
-                            head = MoveObjs[0]->angle;
-                        }
-                        if(MoveObjs[0]->headingSet ==true)
-                        {
-                            
-                            if(sqrt(((MoveObjs[0]->WayPoint[0]-X)*(MoveObjs[0]->WayPoint[0]-X)) +((MoveObjs[0]->WayPoint[1]-Y)*(MoveObjs[0]->WayPoint[1]-Y)))>=0.85 )
-                            {
-                                ROS_INFO("Check Point reached");
-                                //calling the node add feature to add the parent and children to the file of nodes
-                                
-                                count1 =0;
-  
-                            }
-                            if(sqrt((Target[0]-X)*(Target[0]-X) +((Target[1]-Y)*(Target[1]-Y)))<=0.1)
-                            {
-                                ROS_INFO("End Goal Reached");
-                                    
-                            }
-
-                            //after this passive obstacle avoidance and the move method is called
-                            MoveObjs[0]->Obs_avoid();
+                            //MoveObjs[0]->ObjDect = false;
+                            std::cout<<"regrressed to start"<<std::endl;
+                            MoveObjs[0]->Lin_Vel = 0.0f;
+                            MoveObjs[0]->Ang_Vel = 0.0f;
                             MoveObjs[0]->Move();
-                        }
-                
-                    }
-                    else
-                    {
-                        //as count is 0 it means that the traversal target should be set
-                        MoveObjs[0]->WayPoint =child;
-                        MoveObjs[0]->EndPoint = Target;
-                        std::cout<<"child "<<child[0]<<" "<<child[1]<<std::endl; 
-                        count1++;
-                    }
+                                    
+                            LearnObjs[0]->toregress = false;
+                            MoveObjs[0]->ObjDect = false;
+                            LearnObjs[0]->Target =Target;
+                            MoveObjs[0]->headingSet=false;
+                            std::cout<<"target "<<LearnObjs[0]->Target[0]<<" "<<LearnObjs[0]->Target[1]<<std::endl; 
+                            //LearnObjs[0]->FindChildren(X,Y,ranges,yaw);
+                            //child = LearnObjs[0]->BestChild;
+                            count1=0;
+                            
 
+                        }
+                    }
+                   
+                    if(MoveObjs[0]->headingSet ==false)
+                    {
+                        MoveObjs[0]->HeadingCalc();
+                        head = MoveObjs[0]->angle;
+                    }
+                    if(MoveObjs[0]->headingSet ==true)
+                    {
+                        
+                        if(sqrt(((MoveObjs[0]->WayPoint[0]-X)*(MoveObjs[0]->WayPoint[0]-X)) +((MoveObjs[0]->WayPoint[1]-Y)*(MoveObjs[0]->WayPoint[1]-Y)))>=0.85 )
+                        {
+                            ROS_INFO("Check Point reached");
+                            count1 =0;
+                            
+                            //LearnObjs[0]->forbidden=prevChild;
+                            if(LearnObjs[0]->toregress == false)
+                            {
+                                LearnObjs[0]->forbidden=prevChild;
+                            }
+                            
+                            frame = LearnObjs[0]->Re_Learn_Frame;
+                            if(LearnObjs[0]->toregress == false)
+                            {
+                                NavObjs[0]->Node_Add(frame);
+                            }
+                             
+
+  
+                        }
+                        if(sqrt((Target[0]-X)*(Target[0]-X) +((Target[1]-Y)*(Target[1]-Y)))<=0.1)
+                        {
+                            ROS_INFO("End Goal Reached");
+                            std::cout<<"Optimising my Waypoints"<<std::endl;
+                            NavObjs[0]->Node_Opti();
+                            std::cout<<"Waypoints adjusted"<<std::endl;
+                            NavObjs[0]->Node_WriteFormat();
+                            //~TeaRobot();
+
+                        }
+
+                        //after this passive obstacle avoidance and the move method is called
+                        MoveObjs[0]->Obs_avoid();
+                        MoveObjs[0]->Move();
+                    }
+                
                 }
                 else
                 {
-                    std::cout<<"no valid children"<<std::endl;
-
+                    //as count is 0 it means that the traversal target should be set
+                    if(LearnObjs[0]->toregress == false)
+                    {   
+                        std::cout<<"ORGANISING A MOVE"<<std::endl;
+                        MoveObjs[0]->EndPoint = Target;
+                        LearnObjs[0]->Target =Target;
+                        MoveObjs[0]->WayPoint =child;
+                        prevChild.push_back(child);
+                        
+                        
+                        
+                    }
+                    else
+                    {
+                        std::cout<<"REGRESSION ACTIVE"<<std::endl;
+                        MoveObjs[0]->headingSet =false;
+                        LearnObjs[0]->Target =START;
+                        MoveObjs[0]->WayPoint = child;
+                        if(child[0]==START[0]&&child[1]==START[1])
+                        {
+                            MoveObjs[0]->ObjDect=true;
+                        }
+    
+                    }
+                    
+                    std::cout<<"child "<<child[0]<<" "<<child[1]<<std::endl; 
+                    count1++;
+                    
                 }
+
+            }
+            //kind of irrelevant really
+            else
+            {
+                std::cout<<"No info has returned from scanning or learning...Waiting response"<<std::endl;
+            }
         }
     } 
 };
+
 void TeaRobot::learnStart()
 {
     //using the complete 360 range data
@@ -163,9 +232,16 @@ void TeaRobot::learnStart()
     
     if(count<1)
     {
-        Re_learn *Learning = new Re_learn(Target);
+        //activate the learning section of the algorithm
+        
+        START.push_back(StartX);
+        START.push_back(StartY);
+        Re_learn *Learning = new Re_learn(Target,START);
         LearnObjs.push_back(Learning);
         LearnObjs[0]->FindChildren(StartX,StartY,ranges,yaw);
+        //activating the A_search if there are nodes
+        A_search *Search = new  A_search(StartX,StartY,Target);
+        SearchObj.push_back(Search);
         count++;
     }
     else

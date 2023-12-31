@@ -10,7 +10,7 @@ Movement::Movement()
     Lin_Vel = 0.0f;
     headingSet = false;
     //whilst no object has been dected this is needed to start the traversal
-    ObjDect = true;
+    ObjDect = false;
 };
 Movement::~Movement()
 {
@@ -28,8 +28,9 @@ void Movement::Move()
 //method used for navigating each node without collisions
 void Movement::Obs_avoid()
 {
+    
     //testing whether or not the target has been found
-    if(sqrt((EndPoint[0]-X)*(EndPoint[0]-X) +((EndPoint[1]-Y)*(EndPoint[1]-Y)))<=0.1)
+    if(ObjDect==false&&sqrt((EndPoint[0]-X)*(EndPoint[0]-X) +((EndPoint[1]-Y)*(EndPoint[1]-Y)))<=0.1)
     {
         //ROS_INFO("Target Found");
         Lin_Vel = 0.0f;
@@ -40,7 +41,7 @@ void Movement::Obs_avoid()
 
     }
     //testing making sure the check point is checked
-    if(sqrt(((WayPoint[0]-X)*(WayPoint[0]-X)) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))>=0.85)
+    if(ObjDect==false&&sqrt(((WayPoint[0]-X)*(WayPoint[0]-X)) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))>=0.85)
     {
         Lin_Vel = 0.0f;
         Ang_Vel = 0.0f;
@@ -56,6 +57,24 @@ void Movement::Obs_avoid()
         //ObjDect = true;
         return;
     }
+   
+    // if(ObjDect==true&&sqrt(((WayPoint[0]-X)*(WayPoint[0]-X)) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))>=0.1)
+    // {
+    //     Lin_Vel = 1.0f;
+    //     Ang_Vel = 0.0f;
+    //     headingSet = true;
+    //     //ObjDect = true;
+        
+    // }
+    // if(ObjDect==true&&sqrt(((WayPoint[0]-X)*(WayPoint[0]-X)) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))<=0.1)
+    // {
+    //     Lin_Vel = 0.0f;
+    //     Ang_Vel = 0.0f;
+    //     headingSet = false;
+    //     //ObjDect = true;
+        
+    // }
+    
     //changing vels based on sensor data
     //LEFT
     if(ranges[180]<0.6 && ranges[115]<0.6 && ranges[245]>0.6)
@@ -126,7 +145,6 @@ void Movement::Obs_avoid()
         Ang_Vel += 0;
         Lin_Vel = 0.0;
         headingSet = false;
-        ObjDect = true;
         
     }
 
@@ -165,7 +183,7 @@ void Movement::HeadingCalc()
     x_change = WayPoint[0]-X;
     y_change = WayPoint[1]-Y;
     angle = atan2(y_change,x_change);
-    angle = ModCalc((angle+1.5707f),3.1415f)-1.5707f;
+    //angle = ModCalc((angle+1.5707f),3.1415f)-1.5707f;
     heading = 0.5*(angle-yaw);
     Ang_Vel = heading;
     
@@ -175,7 +193,7 @@ void Movement::HeadingCalc()
         Move();
         Ang_Vel = 0.0f;
         headingSet = true;
-        ObjDect = false;
+       
         
     }
     else

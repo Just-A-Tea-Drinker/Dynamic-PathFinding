@@ -5,13 +5,17 @@ class NAV_manager
 {
     public:
     //variables
+    //all known current nodes
+    std::vector<std::vector<std::vector<float>>> All_Nodes,Opti_Nodes;
     //dealing with the file contents
     std::vector<std::vector<float>> Target_contents;
     std::vector<std::vector<float>> Node_contents;
     //just a target from the files
     std::vector<float> Target;
     //storing nodes when routing to be stored and optimised
-    std::vector<std::vector<float>>Nodes_traversed;
+    std::vector<std::vector<float>>Nodes_traversed,No_Children;
+    std::vector<std::vector<float>>Node;
+    std::vector<std::vector<float>>New_Nodes;
 
 
 
@@ -28,7 +32,7 @@ class NAV_manager
     void Node_WriteFormat();
 
     //Methods for backend features such as node optimisation, adding nodes to be optimised and returning the next waypoint
-    void Node_Ret();
+    void Node_Ret(bool method);
     void Node_Add(std::vector<std::vector<float>>Node);
     void Node_Opti();
 };
