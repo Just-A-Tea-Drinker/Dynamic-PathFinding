@@ -152,6 +152,9 @@ add_executable(tea
 	
 	scripts/Headers.h
 	
+	scripts/A_search.h
+	scripts/A_search.cpp
+	
 
 	
 )

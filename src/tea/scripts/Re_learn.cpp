@@ -5,10 +5,11 @@ Re_learn::~Re_learn()
 {
     ROS_INFO("RE Learning controller closed");
 };
-Re_learn::Re_learn(std::vector<float>target)
+Re_learn::Re_learn(std::vector<float>target,std::vector<float>begin)
 {
     ROS_INFO("RE Learning controller active");
     Target = target;
+    Start = begin;
 };
 
 void Re_learn::FindChildren(float x,float y,std::vector<float>ranges,double yaw)
@@ -58,7 +59,7 @@ void Re_learn::FindChildren(float x,float y,std::vector<float>ranges,double yaw)
         distance = Smallest_Ranges[index];
         Relevant_Laser.push_back(CordTransform());
     }
-    //std::cout<<Relevant_Laser.size()<<std::endl;
+    
     for(int index = 0; index<Smallest_Ranges.size();index++)
     {
         if(isgreaterequal(Smallest_Ranges[index],1.0f))
@@ -88,13 +89,44 @@ void Re_learn::FindChildren(float x,float y,std::vector<float>ranges,double yaw)
             }
         }  
     }
-    //Relevant_Laser.clear()
+    if(toregress == false)
+    {
+        //cehcking all the children to see whether or not they are in the forbidden
+        for(std::vector<float>node: Visited)
+        {
+            for(int child = 1;child<Re_Learn_Frame.size();child++)
+            {
+                if(sqrt(((Re_Learn_Frame[child][0]-node[0])*(Re_Learn_Frame[child][0]-node[0]))+((Re_Learn_Frame[child][1]-node[1])*(Re_Learn_Frame[child][1]-node[1])))<2.5)
+                {
+                    Re_Learn_Frame.erase(Re_Learn_Frame.begin()+child);
+                   
+                  
+                   
+                }
+            }
+        }
+         for(std::vector<float>node: forbidden)
+        {
+            for(int child = 1;child<Re_Learn_Frame.size();child++)
+            {
+                if(sqrt(((Re_Learn_Frame[child][0]-node[0])*(Re_Learn_Frame[child][0]-node[0]))+((Re_Learn_Frame[child][1]-node[1])*(Re_Learn_Frame[child][1]-node[1])))<1)
+                {
+                    Re_Learn_Frame.erase(Re_Learn_Frame.begin()+child);
+                  
+                   
+                }
+            }
+        }
+    }
+    
     GetBestChild();
+    Re_frame = Re_Learn_Frame;
+ 
 };
 
 std::vector<float> Re_learn::CordTransform()
 {
-    //based on the rotation/index the estimated co ordinates are calculated in 2 ways
+    //based on the rotation/index the estimated co ordinates are calculated in 2 ways based  on index of the laser scan
     if(VecIn<90&&VecIn>=0||VecIn>=269&&VecIn<360)
     {
         float estiX = X - (distance*cos((VecIn*0.01750139333307743)+Yaw));
@@ -151,20 +183,25 @@ float Re_learn::GetMetric(float estX,float estY)
     float CurToChild = sqrt(((estX-X)*(estX-X))+((estY-Y)*(estY-Y)));
     float ArcCos  = (acos(((CurToChild*CurToChild)+(ChildToTarget*ChildToTarget)-(CurToTarget*CurToTarget))/(2.0f*CurToChild*ChildToTarget)))/3.14f;
    
-    //using the cosine angle,average range of scan in scale to the maxium range and distance in comparrison to the maximum range
-    //return (Dist_Needed*ArcCos);
+    
+    //metric currently used in a average of the manhatten distance and the euclidean distance found to provide a balance between shortest route and a realistic approach
+    //return ChildToTarget;
     return (man_dist+ChildToTarget)/2;
 };
 void Re_learn::GetBestChild()
 {
+   //std::cout<<"target "<<Target[0]<<" "<<Target[1]<<std::endl;
     //searching through the children for the smallest cost
     for(int child = 1;child<Re_Learn_Frame.size();child++)
     {
-        if(sqrt(((Target[0]-X)*(Target[0]-X))+((Target[1]-Y)*(Target[1]-Y)))<0.85f)
+       
+       if(sqrt(((Target[0]-X)*(Target[0]-X))+((Target[1]-Y)*(Target[1]-Y)))<0.85f)
         {
             BestChild=Target;
             break;
         }
+ 
+            
         //IMPLEMENT FRONT AND BACK ALGORITHM FOR A BIT MORE SPEED
         //defualt setting is the first child
         if(child == 1)
@@ -173,17 +210,57 @@ void Re_learn::GetBestChild()
         }
         else
         {
+                    
             if(Re_Learn_Frame[child][2]<BestChild[2])
             {
-           
+                    
                 BestChild = Re_Learn_Frame[child];
-   
-                
-                
+     
             }
         }
+        
     }
+    std::vector<float> target_temp = Target;
+    Target = Start;
+    float start_dist = GetMetric(BestChild[0],BestChild[1]);
+    Target = target_temp;
+    for(std::vector<float>node:forbidden)
+    {
+        if((sqrt(((node[0]-BestChild[0])*(node[0]-BestChild[0]))+((node[1]-BestChild[1])*(node[1]-BestChild[1])))<0.5f)&&(BestChild[2]>start_dist))
+        {
+            
+            toregress = true;
+            return;
+        }
+        
+    }
+    
+    if(forbidden.size()>1)
+    {
+        if((BestChild[2]>forbidden[forbidden.size()-1][2])&&(BestChild[2]<start_dist))
+        {
+            toregress = true;
+        }
+
+    }
+    else
+    {
+        toregress = false;
+    }
+    
+    
    
     
 
-}
+};
+void Re_learn::ControlNodes()
+{
+    //a small method used for dealing with the forbidden list after the regression has been completed
+    for(std::vector<float>node:forbidden)
+    {
+        Visited.push_back(node);
+    }
+    //clearing forbidden for the next run
+    forbidden.clear();
+
+};

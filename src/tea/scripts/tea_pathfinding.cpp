@@ -15,6 +15,8 @@ int main(int argc, char** argv)
     ROS_INFO("Starting Robot");
     
     TeaRobot Robot;
+    ROS_INFO("Closing robot");
+    return(0);
     //ros::spin();
 
 
