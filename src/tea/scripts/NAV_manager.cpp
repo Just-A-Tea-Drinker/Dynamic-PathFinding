@@ -176,7 +176,7 @@ void NAV_manager::Found_Target()
             }
 
         }
-        catch(std::string ans)
+        catch(char ans)
         {
             std::cout<<"You have not entered a valid response, please try again."<<std::endl;
         }
@@ -185,48 +185,6 @@ void NAV_manager::Found_Target()
     
 }
 
-//method for pulling nodes from the vector of vectors to check what its learnt
-void NAV_manager::Node_Ret(bool method)
-{
-    //using a boolean value to make this method have two types of return
-    if(method==true)
-    {
-        //method for updating the nodes after a movement
-        std::ifstream NodeFile("Nodes.txt");
-        std::string temp;
-        std::vector<float> line;
-        //will iterate ln x ln and remove the delimiter ','
-        while(getline(NodeFile,temp))
-        {
-            line.clear();
-            std::stringstream ss(temp);
-            for(float i;ss >> i;)
-            {
-                line.push_back(i);
-                if(ss.peek()== ',')
-                {
-                    ss.ignore();
-                }
-
-            }
-            Node_contents.push_back(line);
-        }
-        NodeFile.close();
-        //processing the format
-        Node_ReadFormat();
-    }
-    else
-    {
-        //Method for accessing and retrieving information from the nodes stored in this class
-
-
-
-    }
-    
-    
-
-
-};
 
 //methods handling the importing and exporting of the nodes
 void NAV_manager::Node_ReadFormat()

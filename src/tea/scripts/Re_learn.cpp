@@ -169,28 +169,25 @@ float Re_learn::GetMetric(float estX,float estY)
         }
     }
     float Dist_Needed = Max_Dist-man_dist;
-    //calculating the collision likiness
-    //achieved by taking the point and all of the laser points available and calculate the mean range then divide by total range
-    for(float range:Smallest_Ranges)
-    {
-        AvgRange+=range;
-    }
-    AvgRange=(AvgRange/360)/3;
 
-    //then calculate cosine angle of the child in comparison to the end target
-    float CurToTarget = sqrt(((Target[0]-X)*(Target[0]-X))+((Target[1]-Y)+(Target[1]-Y)));
-    float ChildToTarget = sqrt(((Target[0]-estX)*(Target[0]-estX))+((Target[1]-estY)+(Target[1]-estY)));
-    float CurToChild = sqrt(((estX-X)*(estX-X))+((estY-Y)*(estY-Y)));
-    float ArcCos  = (acos(((CurToChild*CurToChild)+(ChildToTarget*ChildToTarget)-(CurToTarget*CurToTarget))/(2.0f*CurToChild*ChildToTarget)))/3.14f;
-   
     
+    float ChildToTarget = sqrt(((Target[0]-estX)*(Target[0]-estX))+((Target[1]-estY)+(Target[1]-estY)));
+
     //metric currently used in a average of the manhatten distance and the euclidean distance found to provide a balance between shortest route and a realistic approach
-    //return ChildToTarget;
-    return (man_dist+ChildToTarget)/2;
+    
+    //using a swtiching metric system that dynamically switches
+    if(count3 == 3)
+    {
+        return ChildToTarget;
+    }
+    else
+    {
+        return (man_dist+ChildToTarget)/2;
+    }
+    
 };
 void Re_learn::GetBestChild()
 {
-   //std::cout<<"target "<<Target[0]<<" "<<Target[1]<<std::endl;
     //searching through the children for the smallest cost
     for(int child = 1;child<Re_Learn_Frame.size();child++)
     {
@@ -224,33 +221,32 @@ void Re_learn::GetBestChild()
     Target = Start;
     float start_dist = GetMetric(BestChild[0],BestChild[1]);
     Target = target_temp;
+   
     for(std::vector<float>node:forbidden)
     {
         if((sqrt(((node[0]-BestChild[0])*(node[0]-BestChild[0]))+((node[1]-BestChild[1])*(node[1]-BestChild[1])))<0.5f)&&(BestChild[2]>start_dist))
         {
-            
+                
             toregress = true;
-            return;
-        }
-        
+            count3++;
+            
+        }  
     }
-    
+        
     if(forbidden.size()>1)
     {
-        if((BestChild[2]>forbidden[forbidden.size()-1][2])&&(BestChild[2]<start_dist))
+        if((BestChild[2]>forbidden[forbidden.size()-1][2])&&(BestChild[2]>start_dist))
         {
             toregress = true;
+            count3++;
         }
+       
 
     }
     else
     {
         toregress = false;
     }
-    
-    
-   
-    
 
 };
 void Re_learn::ControlNodes()

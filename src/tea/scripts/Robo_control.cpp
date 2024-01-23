@@ -73,6 +73,12 @@ void TeaRobot::PosCallback(const nav_msgs::Odometry::ConstPtr& msg)
         if(FirstPos ==true)
         {
             FirstPos = false;
+            START.push_back(StartX);
+            START.push_back(StartY);
+            //activating the A_search if there are nodes
+            
+            SearchObj = std::make_unique<A_search>(START,Target,Nodes);
+            path = SearchObj->Path;
   
         }
         else
@@ -83,6 +89,7 @@ void TeaRobot::PosCallback(const nav_msgs::Odometry::ConstPtr& msg)
                 //this is where the control of what nodes need to be travelled to
                 //placed in method for readability
                 PathFollow();
+                
             }
             else
             {
@@ -110,8 +117,7 @@ void TeaRobot::learnStart()
     {
         START.push_back(StartX);
         START.push_back(StartY);
-        //activating the A_search if there are nodes
-        SearchObj = std::make_unique<A_search>(START,Target,NavObjs->Node_contents);
+        
         //activate the reinforcement learning learning section of the algorithm
         
         LearnObjs=std::make_unique<Re_learn>(Target,START);
@@ -148,12 +154,17 @@ void TeaRobot::explore()
                     
             //if the heading is false then the heading is calculated
             //adding the node into a collection nodes seemingly unlinked whereby they are stitched together to form a cartesian ish map
-                        
+            if(sqrt((START[0]-X)*(START[0]-X) +((START[1]-Y)*(START[1]-Y)))<=0.1&&LearnObjs->toregress == false)
+            {
+                NavObjs->Node_Add(LearnObjs->Re_frame); 
+            }
+                       
                     
             if(MoveObjs->headingSet ==false)
             {
                 MoveObjs->HeadingCalc();
-                head = MoveObjs->angle;
+                
+                
             }
             if(MoveObjs->headingSet ==true)
             {
@@ -173,8 +184,8 @@ void TeaRobot::explore()
                     if(LearnObjs->toregress == false)
                     {
                         NavObjs->Node_Add(frame);
-                                
-                                    
+                        
+                        
                     }
                                 
 
@@ -186,8 +197,15 @@ void TeaRobot::explore()
                     MoveObjs->Lin_Vel = 0.0f;
                     MoveObjs->Ang_Vel = 0.0f;
                     MoveObjs->Move();
+                    //adding the last move to the recorded nodes to be stored
+                    frame = LearnObjs->Re_frame;
+                    if(LearnObjs->toregress == false)
+                    {
+                        NavObjs->Node_Add(frame);
+            
+                    }
                     std::cout<<"Optimising my Waypoints"<<std::endl;
-                    NavObjs->Node_Opti();
+                    //NavObjs->Node_Opti();
                     std::cout<<"Waypoints adjusted"<<std::endl;
                     NavObjs->Node_WriteFormat();
                     NavObjs->Found_Target();
@@ -196,16 +214,19 @@ void TeaRobot::explore()
                     {
                         return;
                     }
-                        else
-                        {
-                            START.clear();
-                            START.push_back(StartX);
-                            START.push_back(StartY);
-                            LearnObjs->Start = START;
-                            Target = NavObjs->Target;
-                            count1 = 0;
-                        }
-                                
+                    else
+                    {
+                        START.clear();
+                        START.push_back(StartX);
+                        START.push_back(StartY);
+                        
+                        LearnObjs->Start = START;
+                        Target = NavObjs->Target;
+                        MoveObjs->EndPoint = Target;
+                        LearnObjs->Target = Target;
+                        count1 = 0;
+                    }
+                          
 
 
                 }
@@ -222,6 +243,10 @@ void TeaRobot::explore()
                     MoveObjs->Lin_Vel = 0.0f;
                     MoveObjs->Ang_Vel = 0.0f;
                     MoveObjs->Move();
+                    if(LearnObjs->count3 ==3)
+                    {
+                        LearnObjs->count3 = 0;
+                    }
                     //setting the parameters       
                     LearnObjs->toregress = false;
                     MoveObjs->ObjDect = false;
@@ -266,14 +291,14 @@ void TeaRobot::explore()
                 }
         
             }
-                        
+            //notifying the user of the next expected waypoint          
             std::cout<<"child "<<child[0]<<" "<<child[1]<<std::endl; 
             count1++;
                         
         }
 
     }
-    //kind of irrelevant really, but a rough guide to
+    //kind of irrelevant really, but a rough guides the user on the terminal to the current execution
     else
     {
         std::cout<<"No info has returned from scanning or learning...Waiting response"<<std::endl;
@@ -283,12 +308,145 @@ void TeaRobot::explore()
 void TeaRobot::PathFollow()
 {
     //This will be the control code for making the robot follow a path based on what "its' learnt on previous runs"
+    
+    
+    MoveObjs->ranges=ranges;
+    //making sure the path has something in it
+    if(path.size()>1)
+    {
+        
+        //checking whether or not the heading is set
+        //count2 is used to control the execution
+        if(count2>0)
+        {
+            //traveral and main target has been set now to start moving
+            MoveObjs->X=X;
+            MoveObjs->Y=Y;
+            MoveObjs->roll=roll;
+            MoveObjs->pitch=pitch;
+            MoveObjs->yaw=yaw;
+            MoveObjs->w=w;
+            //turning off traditional controls used for the exploration as the movement controll will be high level
+            MoveObjs->pathDect = true;
+                    
+            //if the heading is false then the heading is calculated      
+            if(MoveObjs->headingSet ==false)
+            {
+                MoveObjs->HeadingCalc();
+                
+            }
+            if(MoveObjs->headingSet ==true)
+            {
+                
+                
 
-    //pulling the calculated path
-    path = SearchObj->Path;
-    //making the child a step of the path
-    child = path[step];
+                //function similar to the exploratory one except this one is used to detect whether the robot is off course          
+                if(sqrt(((MoveObjs->WayPoint[0]-X)*(MoveObjs->WayPoint[0]-X)) +((MoveObjs->WayPoint[1]-Y)*(MoveObjs->WayPoint[1]-Y)))>=way_Dist+0.1 )
+                {
+                    ROS_INFO("Robot off course attempting to correct");
+                    //calcualting if its closer to a previous or in the future point
+                    if(Step<path.size()-1)
+                    {
+                        Step++;
+                    }
+                    else
+                    {
+                        //re-making start to begin the algorithm
+                        START.clear();
+                        START.push_back(X);
+                        START.push_back(Y);
+                        //setting up the search algorithm
+                        SearchObj->Start=START;
+                        SearchObj->PathOption = false;
+                        //calling the  path calculator
+                        SearchObj->A_Node_Search();
+                        path = SearchObj->Path;
+                    }
+                    
+                    count2=0;
 
-    //setting up the robot head towards the target
+                    
+                    
+                    
+                   
+            
+                }
+                //checking if the target has been reached or not
+                if(sqrt((Target[0]-X)*(Target[0]-X) +((Target[1]-Y)*(Target[1]-Y)))<=0.1)
+                {
+                    ROS_INFO("End Goal Reached");
+                    MoveObjs->Lin_Vel = 0.0f;
+                    MoveObjs->Ang_Vel = 0.0f;
+                    MoveObjs->Move();
+                    
+                    //end has been reached asking the user whether or not they want to move to a new position
+                    NavObjs->Found_Target();
+                    //making sure the user wants to continue (fail-safe)
+                    if(NavObjs->closing==true)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        START.clear();
+                        START.push_back(StartX);
+                        START.push_back(StartY);
+                        
+                        LearnObjs->Start = START;
+                        Target = NavObjs->Target;
+                        MoveObjs->EndPoint = Target;
+                        LearnObjs->Target = Target;
+                        count2 = 0;
+                    }
+                          
+
+
+                }
+                //checking whether or not the robot could have hit a check point
+                if(sqrt(((MoveObjs->WayPoint[0]-X)*(MoveObjs->WayPoint[0]-X)) +((MoveObjs->WayPoint[1]-Y)*(MoveObjs->WayPoint[1]-Y)))<=0.1)
+                {
+                    ROS_INFO("Path node has been reached");
+                    
+                    //incrementing the waypoint child
+                    if(Step==path.size()-1)
+                    {
+                        SearchObj->usePath = false;
+                    }
+                    else
+                    {
+                        Step++;
+                        count2 = 0;
+                    }
+                    
+
+
+                }
+                
+                
+                //after this passive obstacle avoidance and the move method is called
+                MoveObjs->Obs_avoid();
+                MoveObjs->Move();
+            }
+            
+                    
+        }
+        else
+        {
+            //as count2 is 0 it means that the traversal target should be set
+            std::cout<<"Navigating to next step"<<std::endl;
+            MoveObjs->EndPoint = Target;
+            
+            MoveObjs->WayPoint =path[Step];
+            way_Dist = sqrt(((MoveObjs->WayPoint[0]-X)*(MoveObjs->WayPoint[0]-X)) +((MoveObjs->WayPoint[1]-Y)*(MoveObjs->WayPoint[1]-Y)));
+            MoveObjs->way_dist = way_Dist;
+                    
+            std::cout<<"Way point "<<path[Step][0]<<" "<<path[Step][1]<<std::endl; 
+            count2++;
+                        
+        }
+    }
+    
+
+    
     
 };

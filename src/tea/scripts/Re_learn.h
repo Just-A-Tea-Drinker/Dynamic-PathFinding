@@ -10,6 +10,7 @@ class Re_learn
     std::vector<std::vector<float>>Visited,forbidden;
     bool toregress = false;
     std::vector<float>Target,Start;
+    int count3= 0;
     //con/de/structor
     Re_learn();
     Re_learn(std::vector<float>Target,std::vector<float>begin);
@@ -31,7 +32,7 @@ class Re_learn
     double Yaw;
     float distance,AvgRange;
     int count2 = 0;
-    int count3= 0;
+    
     float Max_Dist;
 
 

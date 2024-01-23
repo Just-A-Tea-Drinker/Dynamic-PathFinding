@@ -11,6 +11,8 @@ Movement::Movement()
     headingSet = false;
     //whilst no object has been dected this is needed to start the traversal
     ObjDect = false;
+    pathDect = false;
+    count = 0;
 };
 Movement::~Movement()
 {
@@ -32,7 +34,6 @@ void Movement::Obs_avoid()
     //testing whether or not the target has been found
     if(ObjDect==false&&sqrt((EndPoint[0]-X)*(EndPoint[0]-X) +((EndPoint[1]-Y)*(EndPoint[1]-Y)))<=0.1)
     {
-        //ROS_INFO("Target Found");
         Lin_Vel = 0.0f;
         Ang_Vel = 0.0f;
         headingSet = false;
@@ -49,35 +50,37 @@ void Movement::Obs_avoid()
         //ObjDect = true;
         return;
     }
-    if(sqrt((WayPoint[0]-X)*(WayPoint[0]-X) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))<=0.05)
+    //testing whether or not the target has been found
+    if(ObjDect==true&&sqrt((EndPoint[0]-X)*(EndPoint[0]-X) +((EndPoint[1]-Y)*(EndPoint[1]-Y)))<=0.1)
     {
-        Lin_Vel = 1.0f;
+        //ROS_INFO("Target Found");
+        Lin_Vel = 0.0f;
         Ang_Vel = 0.0f;
-        headingSet = true;
+        headingSet = false;
+        Move();
+        return;
+
+    }
+    if(ObjDect==true&&sqrt(((WayPoint[0]-X)*(WayPoint[0]-X)) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))<=0.1)
+    {
+        Lin_Vel = 0.0f;
+        Ang_Vel = 0.0f;
+        headingSet = false;
         //ObjDect = true;
         return;
     }
-   
-    // if(ObjDect==true&&sqrt(((WayPoint[0]-X)*(WayPoint[0]-X)) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))>=0.1)
-    // {
-    //     Lin_Vel = 1.0f;
-    //     Ang_Vel = 0.0f;
-    //     headingSet = true;
-    //     //ObjDect = true;
-        
-    // }
-    // if(ObjDect==true&&sqrt(((WayPoint[0]-X)*(WayPoint[0]-X)) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))<=0.1)
-    // {
-    //     Lin_Vel = 0.0f;
-    //     Ang_Vel = 0.0f;
-    //     headingSet = false;
-    //     //ObjDect = true;
-        
-    // }
-    
+    //testing making sure the check point is checked
+    if(pathDect==true&&sqrt(((WayPoint[0]-X)*(WayPoint[0]-X)) +((WayPoint[1]-Y)*(WayPoint[1]-Y)))>=way_dist+0.1)
+    {
+        Lin_Vel = 0.0f;
+        Ang_Vel = 0.0f;
+        headingSet = false;
+        //ObjDect = true;
+        return;
+    }
     //changing vels based on sensor data
     //LEFT
-    if(ranges[180]<0.6 && ranges[115]<0.6 && ranges[245]>0.6)
+    if(ranges[180]<0.4 && ranges[115]<0.4 && ranges[245]>0.4)
     {
        
         Ang_Vel = 1.0f;
@@ -85,14 +88,14 @@ void Movement::Obs_avoid()
 
     }
     //RIGHT
-    else if(ranges[180]<0.6 && ranges[115]>0.6&& ranges[245]<0.6)
+    else if(ranges[180]<0.4 && ranges[115]>0.4&& ranges[245]<0.4)
     {
         
         Ang_Vel = -1.0f;
         Lin_Vel = 0.0f;
     }
     //FOWARDS
-    else if(ranges[180]>0.6 && ranges[145]>0.6 && ranges[215]>0.6)
+    else if(ranges[180]>0.4 && ranges[145]>0.4 && ranges[215]>0.4)
     {
         
         Ang_Vel = 0.0f;
@@ -100,46 +103,46 @@ void Movement::Obs_avoid()
     }
     
     //FRONT LEFT & RIGHT
-    else if(ranges[130]<0.6&& ranges[230]>0.6)
+    else if(ranges[130]<0.4&& ranges[230]>0.4)
     {
         
         Ang_Vel = 0.5f;
         Lin_Vel = 0.0f;
     }
-    else if(ranges[155]>0.6&& ranges[205]<0.6)
+    else if(ranges[155]>0.4&& ranges[205]<0.4)
     {
         
         Ang_Vel = -0.5f;
         Lin_Vel = 0.0f;
     }
     //CHECKING IF SOMETHING IS DIRRECTLY IN FRONT WITH NOTHING LEFT OR RIGHT
-    else if(ranges[180]<0.6&&ranges[178]<0.6)
+    else if(ranges[180]<0.4&&ranges[178]<0.4)
     {
         //going left
         Ang_Vel = 0.5f;
         Lin_Vel = 0.0f;
     }
-    else if(ranges[180]<0.6&&ranges[178]<0.6)
+    else if(ranges[180]<0.4&&ranges[178]<0.4)
     {
         //going right
         Ang_Vel = -0.5f;
         Lin_Vel = 0.0f;
     }
     //ADJ FOR SIDES
-    else if(ranges[180]>0.6 && ranges[90]<0.6 && ranges[270]>0.6)
+    else if(ranges[180]>0.4 && ranges[90]<0.4 && ranges[270]>0.4)
     {
         
         Ang_Vel+=0.3f;
 
     }
-    else if(ranges[0]>0.6 && ranges[90]>0.6 && ranges[270]<0.6)
+    else if(ranges[0]>0.4 && ranges[90]>0.4 && ranges[270]<0.4)
     {
         
         Ang_Vel-=0.3f;
         
     }
     //if movement not possible
-    else if(ranges[180]<0.6&&headingSet ==true&&ranges[225]<0.6&&ranges[135]<0.6 )
+    else if(ranges[180]<0.4&&headingSet ==true&&ranges[225]<0.4&&ranges[135]<0.4 )
     {
         std::cout<<"Movement not possible"<<std::endl;
         Ang_Vel += 0;
@@ -193,12 +196,26 @@ void Movement::HeadingCalc()
         Move();
         Ang_Vel = 0.0f;
         headingSet = true;
+        count=0;
        
         
     }
     else
     {
+        if(count!=500)
+        {
+            count++;
+        }
+        else
+        {
+            std::cout<<"Inactivitiy detected forcing a move"<<std::endl;
+            count=0;
+            Ang_Vel = 0.0f;
+            headingSet = true;
+                
+        }
         Move();
+        
     }
    
     

@@ -40,6 +40,7 @@ class TeaRobot
     //members
     int count = 0;
     int count1 = 0;
+    int count2 = 0;
     int Step = 0;
     bool FirstPos = true;
     std::vector<float>START;
@@ -49,7 +50,7 @@ class TeaRobot
     //Scan Data
     std::vector<float>ranges,child;
     //Odom data
-    float x,y,z,w,head;
+    float x,y,z,w,way_Dist;
     double roll,yaw,pitch;
     float StartX,StartY;
     float X,Y;
