@@ -328,7 +328,7 @@ void TeaRobot::PathFollow()
             MoveObjs->w=w;
             //turning off traditional controls used for the exploration as the movement controll will be high level
             MoveObjs->pathDect = true;
-                    
+            MoveObs->ObsDect = true;      
             //if the heading is false then the heading is calculated      
             if(MoveObjs->headingSet ==false)
             {
