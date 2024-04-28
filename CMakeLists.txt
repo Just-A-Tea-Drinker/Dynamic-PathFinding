@@ -141,8 +141,8 @@ add_executable(tea
 	scripts/Move.h
 	scripts/Move.cpp
 	
-	scripts/Re_learn.h
-	scripts/Re_learn.cpp
+	scripts/Dym_ASearch.h
+	scripts/Dym_ASearch.cpp
 	
 	scripts/A_search.h
 	scripts/A_search.cpp
