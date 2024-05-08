@@ -6,13 +6,13 @@ exploratorarly or through used previous explorations information to navigate to 
 ## Documentation incoming
 ### Requirements for this project
 - Ros 1 Noetic
-- Ubuntu 18.04
+- Ubuntu 20.04
 - catkin build tools
 
 ### Usage & Information
 
 To use this package this package must be installed inside a package housing inside the src directory after this the catkin_build command can be used to compile the package and then its ready to use.
-After building and sourceing the package to activate the package use ## insert command here ## in a terminal and in a separate terminal run ##insert command here ## this will launch the gazebo simulation as well as the run the package code respectively
+After building and sourceing the package to activate the package use "rosrun tea tea src/tea/scripts/tea_pathfinding.cpp " in a terminal and in a separate terminal run "roslaunch tea world.launch" this will launch the gazebo simulation as well as the run the package code respectively
 ### Robot Behaviour
 The robot's behaviour can be defined as the following:
 If the robot has knowledge of the intended target from previous runs the robot will ask the user if they want to use them depending on the circumstance the robot will either navigate a fixed path to/towards the goal, otherwise it will exploratvely navigate the environment for the goal. This robot is more than capable of finding multiple routes to the same position and if it struggles for too long than a different metric for the AD* is activated.
